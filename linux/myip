@@ -1,0 +1,25 @@
+#!/bin/bash
+# myip - Local interface IPs plus your public IP, in one shot.
+echo "-------------------------------------"
+echo "Local interfaces:"
+echo "-------------------------------------"
+if command -v ip >/dev/null 2>&1; then
+    ip -brief -4 addr show 2>/dev/null | awk '$1 != "lo" {printf "  %-12s %s\n", $1, $3}'
+else
+    echo "  (ip command not found)"
+fi
+
+echo
+echo "-------------------------------------"
+echo "Public IP:"
+echo "-------------------------------------"
+pubip=""
+for url in "https://ifconfig.me" "https://api.ipify.org" "https://icanhazip.com"; do
+    pubip=$(curl -fsS --max-time 5 "$url" 2>/dev/null | tr -d '[:space:]')
+    [ -n "$pubip" ] && break
+done
+if [ -n "$pubip" ]; then
+    echo "  $pubip"
+else
+    echo "  (unavailable - no network or all lookup services unreachable)"
+fi

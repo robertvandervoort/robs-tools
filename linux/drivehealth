@@ -1,0 +1,23 @@
+#!/bin/bash
+echo "-----------------------------------------------------------------------"
+echo "Drive | Serial Number      | Realloc | Pending | Uncorrect | Seek Err"
+echo "-----------------------------------------------------------------------"
+for d in a b c d e f; do
+    if [ -e /dev/sd$d ]; then
+        # Get Serial Number
+        sn=$(sudo smartctl -i /dev/sd$d | grep -i "Serial Number" | awk '{print $3}')
+        
+        # Get SMART Attributes
+        # Using -A to get the table and awk to grab the RAW_VALUE (column 10)
+        realloc=$(sudo smartctl -A /dev/sd$d | grep "Reallocated_Sector_Ct" | awk '{print $10}')
+        pending=$(sudo smartctl -A /dev/sd$d | grep "Current_Pending_Sector" | awk '{print $10}')
+        uncorr=$(sudo smartctl -A /dev/sd$d | grep "Offline_Uncorrectable" | awk '{print $10}')
+        seek=$(sudo smartctl -A /dev/sd$d | grep "Seek_Error_Rate" | awk '{print $10}')
+
+        # Fill empty values with 0
+        realloc=${realloc:-0}; pending=${pending:-0}; uncorr=${uncorr:-0}; seek=${seek:-0}
+
+        printf "/dev/sd%s | %-18s | %7s | %7s | %9s | %s\n" "$d" "$sn" "$realloc" "$pending" "$uncorr" "$seek"
+    fi
+done
+echo "-----------------------------------------------------------------------"

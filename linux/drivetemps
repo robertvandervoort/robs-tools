@@ -1,0 +1,21 @@
+#!/bin/bash
+echo "--------------------------"
+echo "Drive | Temp (C) | Status "
+echo "--------------------------"
+for d in a b c d e f; do
+    if [ -e /dev/sd$d ]; then
+        # Try a more robust way to grab the temperature value
+        temp=$(sudo smartctl -A /dev/sd$d | grep -iE "Temperature_Celsius|Airflow_Temperature_Cel" | awk '{print $10}' | head -n 1)
+        
+        # If temp is empty, set it to "N/A"
+        if [ -z "$temp" ]; then
+            printf "/dev/sd%s |   N/A    | UNKNOWN\n" "$d"
+        else
+            if [ "$temp" -ge 55 ]; then status="CRITICAL";
+            elif [ "$temp" -ge 45 ]; then status="WARM";
+            else status="OK"; fi
+            printf "/dev/sd%s |   %s°C   | %s\n" "$d" "$temp" "$status"
+        fi
+    fi
+done
+echo "--------------------------"

@@ -1,0 +1,29 @@
+#!/bin/bash
+# ports - What's listening on this box? Formatted view of listening TCP/UDP ports.
+# Optionally filter to a single port number.
+# Usage: ports [port]
+set -euo pipefail
+
+FILTER="${1:-}"
+
+if ! command -v ss >/dev/null 2>&1; then
+    echo "ports: 'ss' not found (install iproute2)."
+    exit 1
+fi
+
+echo "----------------------------------------------------------------------"
+echo "Proto | Local Address:Port           | Process"
+echo "----------------------------------------------------------------------"
+
+sudo ss -tulpnH 2>/dev/null | while read -r proto state recvq sendq local peer process; do
+    # Extract just the trailing :port from the local address.
+    port="${local##*:}"
+    if [ -n "$FILTER" ] && [ "$port" != "$FILTER" ]; then
+        continue
+    fi
+    # Pull the program name out of users:(("name",pid=123,fd=4))
+    prog=$(echo "$process" | grep -oE '\("[^"]+"' | head -n1 | tr -d '("')
+    prog=${prog:-"-"}
+    printf "%-5s | %-28s | %s\n" "$proto" "$local" "$prog"
+done
+echo "----------------------------------------------------------------------"

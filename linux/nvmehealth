@@ -1,0 +1,29 @@
+#!/bin/bash
+# nvmehealth - SMART health at-a-glance for NVMe drives.
+# Companion to drivehealth (which covers /dev/sd*); this covers /dev/nvme*.
+echo "---------------------------------------------------------------------------------"
+echo "Drive        | Serial Number      | Used% | Spare% | Temp  | MediaErr | Warn"
+echo "---------------------------------------------------------------------------------"
+for n in 0 1 2 3 4 5; do
+    dev="/dev/nvme${n}"
+    if [ -e "$dev" ]; then
+        info=$(sudo smartctl -i "$dev" 2>/dev/null)
+        attr=$(sudo smartctl -A "$dev" 2>/dev/null)
+
+        sn=$(echo "$info"      | grep -i "Serial Number"        | awk -F: '{print $2}' | xargs)
+        used=$(echo "$attr"    | grep -i "Percentage Used"      | awk -F: '{print $2}' | tr -dc '0-9')
+        spare=$(echo "$attr"   | grep -i "Available Spare:"     | awk -F: '{print $2}' | tr -dc '0-9')
+        temp=$(echo "$attr"    | grep -i "Temperature:"         | awk '{print $2}' | head -n 1)
+        mediaerr=$(echo "$attr"| grep -i "Media and Data Integrity Errors" | awk -F: '{print $2}' | xargs)
+        warn=$(echo "$attr"    | grep -i "Critical Warning"     | awk -F: '{print $2}' | xargs)
+
+        sn=${sn:-N/A}; used=${used:-0}; spare=${spare:-0}; temp=${temp:-N/A}
+        mediaerr=${mediaerr:-0}; warn=${warn:-N/A}
+
+        printf "%-12s | %-18s | %4s%% | %5s%% | %3s C | %8s | %s\n" \
+            "$dev" "$sn" "$used" "$spare" "$temp" "$mediaerr" "$warn"
+    fi
+done
+echo "---------------------------------------------------------------------------------"
+echo "Tip: Used% climbing toward 100, Spare% falling below the drive threshold, or a"
+echo "non-zero Critical Warning are the signs to plan a replacement."

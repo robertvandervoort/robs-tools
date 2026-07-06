@@ -1,0 +1,42 @@
+#!/bin/bash
+# dprune - Guarded Docker cleanup. The bigger-hammer companion to cdl.
+# Reclaims stopped containers, dangling images, unused networks and build cache.
+# Pass --volumes to ALSO remove unused volumes (destructive - can delete data!).
+set -euo pipefail
+
+PRUNE_VOLUMES=""
+for arg in "$@"; do
+    case "$arg" in
+        --volumes|-v) PRUNE_VOLUMES="--volumes" ;;
+        -h|--help)
+            echo "Usage: dprune [--volumes]"
+            echo "  (no args)    Prune stopped containers, dangling images, networks, build cache"
+            echo "  --volumes    Also prune unused volumes (WARNING: may delete data)"
+            exit 0 ;;
+        *) echo "dprune: unknown argument '$arg' (try --help)"; exit 1 ;;
+    esac
+done
+
+if ! command -v docker >/dev/null 2>&1; then
+    echo "dprune: docker not found on this system."
+    exit 1
+fi
+
+echo "Disk usage before:"
+sudo docker system df
+echo
+
+if [ -n "$PRUNE_VOLUMES" ]; then
+    echo "WARNING: --volumes will remove unused volumes and any data they hold."
+fi
+read -r -p "Proceed with 'docker system prune -a -f ${PRUNE_VOLUMES}'? [y/N] " reply
+case "$reply" in
+    [yY]|[yY][eE][sS]) ;;
+    *) echo "Aborted."; exit 0 ;;
+esac
+
+sudo docker system prune -a -f $PRUNE_VOLUMES
+
+echo
+echo "Disk usage after:"
+sudo docker system df

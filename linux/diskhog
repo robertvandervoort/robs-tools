@@ -1,0 +1,23 @@
+#!/bin/bash
+# diskhog - Show the biggest space consumers under a path.
+# The natural next step when df -h is scary and logs/cache didn't cut it.
+# Usage: diskhog [path] [count]
+#   path   directory to scan   (default: current directory)
+#   count  how many to list    (default: 15)
+set -euo pipefail
+
+PATH_TO_SCAN="${1:-.}"
+COUNT="${2:-15}"
+
+if [ ! -d "$PATH_TO_SCAN" ]; then
+    echo "diskhog: '$PATH_TO_SCAN' is not a directory."
+    exit 1
+fi
+
+echo "Top $COUNT space consumers under: $(readlink -f "$PATH_TO_SCAN")"
+echo "-------------------------------------------------------------"
+
+# -x keeps du on one filesystem so we don't wander into mounts/network shares.
+sudo du -xh --max-depth=1 "$PATH_TO_SCAN" 2>/dev/null \
+    | sort -rh \
+    | head -n "$((COUNT + 1))"

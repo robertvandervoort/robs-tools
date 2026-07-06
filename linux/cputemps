@@ -1,0 +1,27 @@
+#!/bin/bash
+# cputemps - Quick CPU temperature readout with OK/WARM/CRITICAL banding.
+# Sibling to drivetemps. Uses lm-sensors (sudo apt install lm-sensors).
+if ! command -v sensors >/dev/null 2>&1; then
+    echo "cputemps: 'sensors' not found. Install lm-sensors:"
+    echo "    sudo apt install lm-sensors && sudo sensors-detect"
+    exit 1
+fi
+
+echo "-------------------------------------"
+echo "Sensor              | Temp (C) | Status"
+echo "-------------------------------------"
+
+# Grab any line that looks like a core/package/tctl temperature reading.
+sensors 2>/dev/null | grep -iE "Core [0-9]+:|Package id|Tctl:|Tdie:|CPU:" | while read -r line; do
+    label=$(echo "$line" | awk -F: '{print $1}' | xargs)
+    temp=$(echo "$line" | grep -oE "\+[0-9]+\.[0-9]+" | head -n 1 | tr -d '+')
+    [ -z "$temp" ] && continue
+
+    whole=${temp%.*}
+    if   [ "$whole" -ge 85 ]; then status="CRITICAL"
+    elif [ "$whole" -ge 70 ]; then status="WARM"
+    else status="OK"; fi
+
+    printf "%-19s | %6s   | %s\n" "$label" "$temp" "$status"
+done
+echo "-------------------------------------"

@@ -1,0 +1,31 @@
+#!/bin/bash
+# svcfail - Fast triage: list any failed systemd units, and offer the recent
+# journal for one of them. Great first stop when a server "feels off".
+# Usage: svcfail [unit]
+#   (no args)   list all failed units
+#   unit        show the last 30 journal lines for that unit
+set -euo pipefail
+
+if ! command -v systemctl >/dev/null 2>&1; then
+    echo "svcfail: systemctl not found (is this a systemd system?)."
+    exit 1
+fi
+
+if [ -n "${1:-}" ]; then
+    echo "Recent journal for: $1"
+    echo "-------------------------------------"
+    sudo journalctl -u "$1" -n 30 --no-pager
+    exit 0
+fi
+
+failed=$(systemctl --failed --no-legend --plain 2>/dev/null)
+if [ -z "$failed" ]; then
+    echo "No failed units. All green."
+    exit 0
+fi
+
+echo "Failed units:"
+echo "-------------------------------------"
+systemctl --failed --no-pager
+echo "-------------------------------------"
+echo "Inspect one with:  svcfail <unit-name>"
