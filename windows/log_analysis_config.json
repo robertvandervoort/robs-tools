@@ -1,0 +1,34 @@
+{
+  "time_ranges": {
+    "recent_minutes": 30,
+    "export_hours": 12,
+    "analysis_window_minutes": 15,
+    "cluster_gap_minutes": 5
+  },
+  "critical_event_ids": [41, 6008, 46, 1074, 1076, 6005, 6006],
+  "error_levels": ["Error", "Critical"],
+  "warning_levels": ["Warning"],
+  "info_levels": ["Information"],
+  "pattern_detection": {
+    "wsl_keywords": ["WSL", "Windows Subsystem", "wsl.exe"],
+    "dcom_keywords": ["DCOM", "COM Server", "Component Services"],
+    "defender_keywords": ["MsMpEng", "Defender", "Antivirus", "Windows Defender"],
+    "service_keywords": ["service.*terminated", "service.*failed", "service.*stopped"],
+    "hardware_keywords": ["hardware", "disk", "storage", "NVMe", "controller error"],
+    "hyperv_keywords": ["Hyper-V", "virtualization", "vmms", "VMMS"],
+    "startmenu_keywords": ["StartMenu", "Start.*Menu", "ShellExperienceHost"],
+    "bsod_keywords": ["Blue Screen", "BSOD", "STOP", "BugCheck"],
+    "memory_keywords": ["memory", "RAM", "page file", "virtual memory"],
+    "network_keywords": ["network", "TCP", "UDP", "connection", "timeout"]
+  },
+  "output_formats": {
+    "csv": true,
+    "json": false,
+    "html": false,
+    "console": true
+  },
+  "date_format": "%m/%d/%Y %I:%M:%S %p",
+  "max_message_length": 100,
+  "enable_caching": true,
+  "cache_duration_minutes": 5
+}
